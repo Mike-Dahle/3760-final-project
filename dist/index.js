@@ -4,6 +4,12 @@ const apiKey = 'f2f05023867c43febff4928653fdd52f';
 // Base URL for the RAWG API
 const baseURL = 'https://api.rawg.io/api/';
 
+document.getElementById('default-search').addEventListener('focusout', function(e) {
+    setTimeout(() => {
+        document.getElementById('dropbox').innerHTML = '';
+    }, 200);
+});
+
 // Function to fetch games
 async function fetchGames() {
     try {
@@ -58,10 +64,9 @@ fetchGames();
 
 document.getElementById('default-search').addEventListener('input', function(e) {
     const searchTerm = e.target.value;
+    const dropbox = document.getElementById('dropbox');
 
-    if (searchTerm.length > 2) { // Trigger search for queries longer than 2 characters
-        searchGames(searchTerm);
-    }
+    searchTerm.length > 0 ? searchGames(searchTerm) : dropbox.innerHTML = '';
 });
 
 async function searchGames(query) {
@@ -70,7 +75,7 @@ async function searchGames(query) {
     try {
         const response = await fetch(url);
         const data = await response.json();
-        console.log(data);
+        //console.log(data);
         displayResults(data.results);
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -80,11 +85,125 @@ async function searchGames(query) {
 function displayResults(games) {
     const dropbox = document.getElementById('dropbox');
     dropbox.innerHTML = ''; // Clear previous results
-
     games.forEach(game => {
-        const p = document.createElement('p');
-        p.className = 'border-b border-gray-400 hover:bg-gray-100 cursor-pointer w-full p-2';
-        p.textContent = game.name; // Adjust as needed to display the desired game info
-        dropbox.appendChild(p);
+        const resultDiv = document.createElement('div');
+        resultDiv.innerHTML = `
+            <div class="flex items-center gap-2 p-2 border-b border-gray-400 hover:bg-gray-100 cursor-pointer" id="${game.id}">
+                <img src="${game.background_image}" class="w-10 h-10 rounded-md">
+                <p class="text-sm font-bold">${game.name}</p>
+            </div>
+        `
+        resultDiv.addEventListener('click', function(e) {
+            games.filter(game => game.id === parseInt(e.target.id)).forEach(game => {
+                displaySearchResult(game);
+            })
+        });
+        dropbox.appendChild(resultDiv);
     });
 }
+
+function displaySearchResult(game) {
+    const main = document.querySelector('.main-content');
+    console.log(game);
+    main.innerHTML = `
+        <div class="min-h-full w-full pr-6">
+            <h1 class="text-[64px] font-bold text-white">${game.name}</h1>
+            <div class="h-64 w-full bg-cover bg-center" style="background-image: url(${game.background_image})"></div>
+        </div>
+    `;  
+}
+
+/* {slug: 'dark-souls', name: 'Dark Souls', playtime: 48, platforms: Array(3), stores: Array(2), …}
+added
+: 
+3205
+added_by_status
+: 
+{yet: 135, owned: 2047, beaten: 615, toplay: 100, dropped: 268, …}
+background_image
+: 
+"https://media.rawg.io/media/games/582/582b5518a52f5086d15dde128264b94d.jpg"
+clip
+: 
+null
+dominant_color
+: 
+"0f0f0f"
+esrb_rating
+: 
+{id: 4, name: 'Mature', slug: 'mature', name_en: 'Mature', name_ru: 'С 17 лет'}
+genres
+: 
+(2) [{…}, {…}]
+id
+: 
+5538
+metacritic
+: 
+89
+name
+: 
+"Dark Souls"
+parent_platforms
+: 
+(3) [{…}, {…}, {…}]
+platforms
+: 
+(3) [{…}, {…}, {…}]
+playtime
+: 
+48
+rating
+: 
+4.34
+rating_top
+: 
+5
+ratings
+: 
+(4) [{…}, {…}, {…}, {…}]
+ratings_count
+: 
+889
+released
+: 
+"2011-09-22"
+reviews_count
+: 
+896
+reviews_text_count
+: 
+6
+saturated_color
+: 
+"0f0f0f"
+score
+: 
+"66.58681"
+short_screenshots
+: 
+(7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+slug
+: 
+"dark-souls"
+stores
+: 
+(2) [{…}, {…}]
+suggestions_count
+: 
+671
+tags
+: 
+(5) [{…}, {…}, {…}, {…}, {…}]
+tba
+: 
+false
+updated
+: 
+"2023-11-29T19:20:57"
+user_game
+: 
+null
+[[Prototype]]
+: 
+Object */
