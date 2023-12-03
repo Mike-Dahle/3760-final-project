@@ -33,8 +33,17 @@ async function fetchGames() {
             gameElement.className = 'game-item'; 
             gameElement.innerHTML = `
                 <div class="rounded-md overflow-hidden shadow-lg bg-gray-900 w-64 h-full cursor-pointer hover:ring-1 ring-white">
-                    <div class="h-32 bg-cover bg-center" style="background-image: url(${game.background_image})">
-                        <!-- Buttons here -->
+                    <div class="h-32 bg-cover bg-center flex justify-end p-2" style="background-image: url(${game.background_image})">
+                        <div>
+                            <button class="bg-red-500 hover:bg-red-700 drop-shadow-lg text-white px-1 py-1 rounded-full flex items-center mb-2" id="library">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="white" height="18" viewBox="0 -960 960 960" width="18"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
+                            </button>
+                            <button class="bg-red-500 hover:bg-red-700 drop-shadow-lg text-white px-1 py-1 rounded-full flex items-center" id="bookmark">
+                                    <svg stroke-width="3" fill="currentColor" height="18" viewBox="0 -960 960 960" width="18">
+                                    <path d="M200-120v-640q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v640L480-240 200-120Zm80-122 200-86 200 86v-518H280v518Zm0-518h400-400Z"/>
+                                    </svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="platforms"></div>
                     <h2 class="font-bold text-xl text-white px-2 pt-2">${game.name}</h2>
@@ -45,6 +54,18 @@ async function fetchGames() {
             `;
 
             gameElement.addEventListener('click', () => displaySearchResult(game));
+            libraryBtn = gameElement.querySelector('#library');
+            bookmarkBtn = gameElement.querySelector('#bookmark');
+            libraryBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                gameLibrary.push(game);
+                console.log(gameLibrary);
+            });
+            bookmarkBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                bookaredGames.push(game);
+            
+            });
 
             const genresDiv = gameElement.querySelector('.genre');
             const platformsDiv = gameElement.querySelector('.platforms');
@@ -126,11 +147,11 @@ async function displaySearchResult(game) {
         main.innerHTML = `
         <div class="h-[32rem] w-full bg-cover bg-top brightness-50" style="background-image: url(${game.background_image})"></div>
         <div class="flex items-center mt-2">
-            <button class="bg-red-500 hover:bg-red-700 hover:ring-1 ring-white text-white px-3 py-1 rounded-full mr-2 flex items-center gap-1">
+            <button class="bg-red-500 hover:bg-red-700 hover:ring-1 ring-white text-white px-3 py-1 rounded-full mr-2 flex items-center gap-1" id="library">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="white" height="18" viewBox="0 -960 960 960" width="18"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
                 Add to Library
             </button>
-            <button class="bg-red-500 hover:bg-red-700 hover:ring-1 ring-white text-white px-3 py-1 rounded-full mr-4 flex items-center gap-1">
+            <button class="bg-red-500 hover:bg-red-700 hover:ring-1 ring-white text-white px-3 py-1 rounded-full mr-4 flex items-center gap-1" id="bookmark">
                     <svg stroke-width="3" fill="currentColor" height="18" viewBox="0 -960 960 960" width="18">
                     <path d="M200-120v-640q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v640L480-240 200-120Zm80-122 200-86 200 86v-518H280v518Zm0-518h400-400Z"/>
                     </svg>
@@ -153,6 +174,15 @@ async function displaySearchResult(game) {
         </div>
         `;  
 
+        const libraryBtn = document.getElementById('library');
+        const bookmarkBtn = document.getElementById('bookmark');
+        libraryBtn.addEventListener('click', function(e) {
+            gameLibrary.push(game);
+        });
+        bookmarkBtn.addEventListener('click', function(e) {
+            bookaredGames.push(game);
+        });
+
         game.genres.forEach(genre => {
             let genreDiv = document.querySelector('.genres');
             let genreElement = document.createElement('span');
@@ -173,7 +203,7 @@ async function fetchYouTubeTrailer(gameName) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log(data);
+        //console.log(data);
         const firstResult = data.items[0];
 
         if (firstResult) {
@@ -200,7 +230,7 @@ async function fetchGameDetails(gameId) {
 
         // Accessing the description
         const gameDescription = gameDetails.description;
-        console.log(gameDescription); // Output the description
+        //console.log(gameDescription); // Output the description
         return gameDescription;
     } catch (error) {
         console.error('Error fetching game details:', error);
