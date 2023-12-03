@@ -4,6 +4,10 @@ const apiKey = 'f2f05023867c43febff4928653fdd52f';
 // Base URL for the RAWG API
 const baseURL = 'https://api.rawg.io/api/';
 
+let gameLibrary = [];
+let bookaredGames = [];
+let userRating = [];
+
 document.getElementById('default-search').addEventListener('focusout', function(e) {
     setTimeout(() => {
         document.getElementById('dropbox').innerHTML = '';
@@ -21,7 +25,7 @@ async function fetchGames() {
         data.results.forEach((game) => {
             const gameElement = document.createElement('div');
             gameElement.innerHTML = `
-                <div class="rounded-md overflow-hidden shadow-lg bg-gray-900 w-64 h-full">
+                <div class="rounded-md overflow-hidden shadow-lg bg-gray-900 w-64 h-full" onClick="displaySearchResult(game)">
                     <div class="h-32 bg-cover bg-center" style="background-image: url(${game.background_image})">
                         <button class="bg-red-500 hover:bg-red-700 p-1 rounded-full float-right mr-2 mt-2">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="white" height="18" viewBox="0 -960 960 960" width="18"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
@@ -104,13 +108,56 @@ function displayResults(games) {
 
 function displaySearchResult(game) {
     const main = document.querySelector('.main-content');
-    console.log(game);
+    main.innerHTML = ''
+    //console.log(game);
     main.innerHTML = `
-        <div class="min-h-full w-full pr-6">
-            <h1 class="text-[64px] font-bold text-white">${game.name}</h1>
-            <div class="h-64 w-full bg-cover bg-center" style="background-image: url(${game.background_image})"></div>
-        </div>
+    <div class="h-[32rem] w-full bg-cover bg-top brightness-50" style="background-image: url(${game.background_image})"></div>
+    <div class="flex items-center mt-2">
+      <button class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded-full mr-2 flex items-center gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="white" height="18" viewBox="0 -960 960 960" width="18"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
+        Add to Library
+      </button>
+      <button class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded-full mr-4 flex items-center gap-1">
+          <svg stroke-width="3" fill="currentColor" height="18" viewBox="0 -960 960 960" width="18">
+          <path d="M200-120v-640q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v640L480-240 200-120Zm80-122 200-86 200 86v-518H280v518Zm0-518h400-400Z"/>
+          </svg>
+          Bookmark
+      </button>
+      <h2 class="text-white mr-4">Game Released: ${formatDate(game.released)}</h2>
+      <div class="flex items-center">
+        <p class="text-white mr-2">Genres:</p>
+        <span class="text-[12px] font-bold text-gray-800 bg-white py-1 px-2 rounded-full">#Fun</span>
+      </div>
+    </div>
+    <div class="w-3/4 mx-auto">
+      <h1 class="text-[64px] font-bold text-white border-b-2 mb-4">${game.name}</h1>
+      <iframe class="w-full h-full" src="${fetchGameTrailer(game.id)}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      <h2 class="text-white text-xl font-bold mt-8 border-b-2 mb-2">ABOUT THIS GAME</h2>
+      <p class="text-white mt-2">Dark Souls is an action RPG developed by FromSoftware and published internationally by Bandai Namco. In Japan, the game was published by FromSoftware itself. It was initially released for the consoles only, but later on, the enhanced edition of the game, Dark Souls: Prepare to Die Edition, was released for the PC. The point behind the game was to entertain the players with a hardcore, challenging experience that was not a cakewalk even for the most skilled players. The game features a world of dark fantasy setting, like the majority of other FromSoftware games. The plot follows a characterless protagonist, who is known as the Chosen Undead, who has to fight his way through the world that is on the brink of extinction. The protagonist ends up in the Undead Asylum, where he must get out and travel to the Lordran, the land of the ancient lords. To achieve this, he must get the souls of the lords and kindle the flame in the fire.</p>
+      <div>
+        <h3></h3>
+      </div>
+    </div>
     `;  
+}
+
+async function fetchGameTrailer(gameId) {
+    const url = `https://api.rawg.io/api/games/${gameId}?key=${apiKey}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const gameDetails = await response.json();
+        
+        // Assuming the trailer URL is in a property named 'clip'
+        const trailerUrl = gameDetails.clip?.clip || 'No trailer available';
+        console.log(trailerUrl); // Use or display the trailer URL as needed
+        return trailerUrl;
+    } catch (error) {
+        console.error('Error fetching game data:', error);
+    }
 }
 
 /* {slug: 'dark-souls', name: 'Dark Souls', playtime: 48, platforms: Array(3), stores: Array(2), …}
