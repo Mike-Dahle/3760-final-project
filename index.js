@@ -7,26 +7,42 @@ const baseURL = 'https://api.rawg.io/api/';
 let gameLibrary = [];
 let bookaredGames = [];
 let userRating = [];
+let currentPage = 1;
 
+document.querySelector('.prevBtn').addEventListener('click', function(e) {
+    if (currentPage > 1) {
+        const main = document.querySelector('.main-content');
+        currentPage--;
+        main.innerHTML = '';
+        fetchGames(currentPage);
+    }
+});
+document.querySelector('.nextBtn').addEventListener('click', function(e) {
+    const main = document.querySelector('.main-content');
+    currentPage++;
+    main.innerHTML = '';
+    fetchGames(currentPage);
+});
 document.getElementById('homeBtn').addEventListener('click', function(e) {
     e.preventDefault();
     const main = document.querySelector('.main-content');
     main.innerHTML = '';
     fetchGames();
 });
-
 document.getElementById('default-search').addEventListener('focusout', function(e) {
     setTimeout(() => {
         document.getElementById('dropbox').innerHTML = '';
     }, 200);
 });
 
-async function fetchGames() {
+async function fetchGames(page = currentPage) {
     try {
-        const response = await fetch(`${baseURL}games?key=${apiKey}&page_size=40`);
+        const response = await fetch(`${baseURL}games?key=${apiKey}&page_size=40&page=${page}`);
         const data = await response.json();
         console.log(data);
         const mainSection = document.querySelector('.main-content');
+        document.querySelector('.paginate').classList.remove('hidden');
+        mainSection.innerHTML = '';
 
         data.results.forEach((game) => {
             const gameElement = document.createElement('div');
@@ -140,12 +156,15 @@ async function displaySearchResult(game) {
         let details = await fetchGameDetails(game.id);
         let gameTrailerId = await fetchYouTubeTrailer(game.name);
         let gameTrailer = `https://www.youtube.com/embed/${gameTrailerId}?si=njS2mhwdffLo9fBI`
+        document.querySelector('.paginate').classList.add('hidden');
 
         main.innerHTML = '';
         console.log(game.name);
 
         main.innerHTML = `
-        <div class="h-[32rem] w-full bg-cover bg-top brightness-50" style="background-image: url(${game.background_image})"></div>
+        <div class="h-[32rem] w-full bg-cover bg-top brightness-50" style="background-image: url(${game.background_image})">
+        
+        </div>
         <div class="flex items-center mt-2">
             <button class="bg-red-500 hover:bg-red-700 hover:ring-1 ring-white text-white px-3 py-1 rounded-full mr-2 flex items-center gap-1" id="library">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="white" height="18" viewBox="0 -960 960 960" width="18"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
@@ -168,8 +187,9 @@ async function displaySearchResult(game) {
             <iframe class="w-full h-full" src="${gameTrailer}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             <h2 class="text-white text-xl font-bold mt-8 border-b-2 mb-2">ABOUT THIS GAME</h2>
             <div class="text-white mt-2">${details}</div>
-            <div>
-                <h3></h3>
+            
+            <div class="stores my-8">
+             
             </div>
         </div>
         `;  
@@ -181,6 +201,18 @@ async function displaySearchResult(game) {
         });
         bookmarkBtn.addEventListener('click', function(e) {
             bookaredGames.push(game);
+        });
+
+        game.stores.forEach(location => {
+            let storeDiv = document.querySelector('.stores');
+            let storeElement = document.createElement('span');
+            storeElement.innerHTML = `
+            <a href="https://${location.store.domain}" target="_blank" class="w-1/2 mx-auto hover:ring-1 ring-white h-12 my-4 rounded-sm bg-gradient-to-br from-gray-900 via-purple-900 to-violet-600 flex items-center justify-between px-8 text-gray-100 font-bold">
+                <h4>Buy ${game.name} from ${location.store.name}</h4>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="white" height="24" viewBox="0 -960 960 960" width="24"><path d="M202.87-111.869q-37.783 0-64.392-26.609-26.609-26.609-26.609-64.392v-554.26q0-37.783 26.609-64.392 26.609-26.609 64.392-26.609H434.5q19.152 0 32.326 13.174T480-802.63q0 19.152-13.174 32.326T434.5-757.13H202.87v554.26h554.26V-434.5q0-19.152 13.174-32.326T802.63-480q19.153 0 32.327 13.174t13.174 32.326v231.63q0 37.783-26.609 64.392-26.609 26.609-64.392 26.609H202.87Zm554.26-581.848L427-363.587q-12.674 12.674-31.587 12.554-18.913-.119-31.587-12.793t-12.674-31.707q0-19.032 12.674-31.706L693.717-757.13H605.5q-19.152 0-32.326-13.174T560-802.63q0-19.153 13.174-32.327t32.326-13.174h242.631V-605.5q0 19.152-13.174 32.326T802.63-560q-19.152 0-32.326-13.174T757.13-605.5v-88.217Z"/></svg>
+            </a>
+            `;
+            storeDiv.appendChild(storeElement);
         });
 
         game.genres.forEach(genre => {
@@ -237,7 +269,97 @@ async function fetchGameDetails(gameId) {
     }
 }
 
-/* async function fetchStoreLinks(gameId) {
-    const url = `https://api.rawg.io/api/games/${gameId}/stores?key=${apiKey}`;
-    /games/{game_pk}/stores
-} */
+let esrbFilter = document.getElementById('esrb');
+let genreFilter = document.getElementById('genre');
+let platformFilter = document.getElementById('platform');
+esrbFilter.addEventListener('change', function(e) {
+    fetchAndFilterGames('esrb-rating', e.target.value);
+});
+genreFilter.addEventListener('change', function(e) {
+    fetchAndFilterGames('genre', e.target.value);
+});
+// Filter games by what filter and value you pass in
+async function fetchAndFilterGames(filterType, filterValue, page = currentPage) {
+    let filterParam = '';
+
+    if (filterType === 'esrb-rating') {
+        filterParam = `&esrb_rating=${encodeURIComponent(filterValue)}`;
+    }
+    if (filterType === 'genre') {
+        filterParam = `&genres=${encodeURIComponent(filterValue)}`;
+    }
+    if (filterType === 'platform') {
+        filterParam = `&platforms=${encodeURIComponent(filterValue)}`;
+    }
+
+    try {
+        const response = await fetch(`${baseURL}games?key=${apiKey}&page_size=40&page=${page}${filterParam}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        console.log(data);
+        const mainSection = document.querySelector('.main-content');
+        document.querySelector('.paginate').classList.remove('hidden');
+        mainSection.innerHTML = '';
+
+        data.results.forEach((game) => {
+            const gameElement = document.createElement('div');
+            gameElement.className = 'game-item'; 
+            gameElement.innerHTML = `
+                <div class="rounded-md overflow-hidden shadow-lg bg-gray-900 w-64 h-full cursor-pointer hover:ring-1 ring-white">
+                    <div class="h-32 bg-cover bg-center flex justify-end p-2" style="background-image: url(${game.background_image})">
+                        <div>
+                            <button class="bg-red-500 hover:bg-red-700 drop-shadow-lg text-white px-1 py-1 rounded-full flex items-center mb-2" id="library">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="white" height="18" viewBox="0 -960 960 960" width="18"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
+                            </button>
+                            <button class="bg-red-500 hover:bg-red-700 drop-shadow-lg text-white px-1 py-1 rounded-full flex items-center" id="bookmark">
+                                    <svg stroke-width="3" fill="currentColor" height="18" viewBox="0 -960 960 960" width="18">
+                                    <path d="M200-120v-640q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v640L480-240 200-120Zm80-122 200-86 200 86v-518H280v518Zm0-518h400-400Z"/>
+                                    </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="platforms"></div>
+                    <h2 class="font-bold text-xl text-white px-2 pt-2">${game.name}</h2>
+                    <p class="text-gray-300 text-[12px] px-2">Release Date: ${formatDate(game.released)}</p>
+                    <div class="p-2 flex flex-wrap gap-1 genre">    
+                    </div>
+                </div> 
+            `;
+
+            gameElement.addEventListener('click', () => displaySearchResult(game));
+            libraryBtn = gameElement.querySelector('#library');
+            bookmarkBtn = gameElement.querySelector('#bookmark');
+            libraryBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                gameLibrary.push(game);
+                console.log(gameLibrary);
+            });
+            bookmarkBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                bookaredGames.push(game);
+            
+            });
+
+            const genresDiv = gameElement.querySelector('.genre');
+            
+            game.genres.forEach((genre) => {
+                genresDiv.innerHTML += `<span class="inline-block text-[12px] font-bold text-gray-100">#${genre.name}</span>`;
+            });
+
+            /* 
+            game.platforms.forEach((platform) => {
+                platformsDiv.innerHTML += `<span class="inline-block bg-gray-200 rounded-full mb-4 text-sm font-semibold text-gray-700">#${platform.image_background}</span>`;
+            }); 
+            */
+
+            mainSection.appendChild(gameElement);
+        });
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return [];
+    }
+}
+
