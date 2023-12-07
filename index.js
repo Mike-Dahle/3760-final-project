@@ -5,29 +5,71 @@ const apiKey = 'f2f05023867c43febff4928653fdd52f';
 const baseURL = 'https://api.rawg.io/api/';
 
 let gameLibrary = [];
-let bookaredGames = [];
+let bookmarkedGames = [];
 let userRating = [];
 let currentPage = 1;
 
-document.querySelector('.prevBtn').addEventListener('click', function(e) {
-    if (currentPage > 1) {
-        const main = document.querySelector('.main-content');
-        currentPage--;
-        main.innerHTML = '';
-        fetchGames(currentPage);
+// populate the select filters
+async function fetchGenres() {
+    const url = `${baseURL}genres?key=${apiKey}`;
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log(data);
+        let genreSelect = document.getElementById('genre');
+        data.results.forEach(genre => {
+            let genreOption = document.createElement('option');
+            genreOption.value = genre.slug;
+            genreOption.innerText = genre.name;
+            genreSelect.appendChild(genreOption);
+        });
+    } catch (error) {
+        console.error('Error fetching data:', error);
     }
-});
-document.querySelector('.nextBtn').addEventListener('click', function(e) {
-    const main = document.querySelector('.main-content');
-    currentPage++;
-    main.innerHTML = '';
-    fetchGames(currentPage);
-});
+}
+fetchGenres();
+async function fetchYears() {
+    const url = `${baseURL}games?key=${apiKey}`;
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log(data);
+            data.filters.years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year.filter;
+                option.textContent = `${year.from} - ${year.to}`
+                document.getElementById('years').appendChild(option);
+            });
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
+fetchYears();
+async function fetchplatforms() {
+    const url = `${baseURL}platforms?key=${apiKey}`;
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log(data);
+        let platformSelect = document.getElementById('platforms');
+        data.results.forEach(platform => {
+            let platformOption = document.createElement('option');
+            platformOption.value = platform.id;
+            platformOption.innerText = platform.name;
+            platformSelect.appendChild(platformOption);
+        });
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
+fetchplatforms();
+
 document.getElementById('homeBtn').addEventListener('click', function(e) {
     e.preventDefault();
     const main = document.querySelector('.main-content');
     main.innerHTML = '';
-    fetchGames();
+    currentPage = 1;
+    fetchAllGames();
 });
 document.getElementById('default-search').addEventListener('focusout', function(e) {
     setTimeout(() => {
@@ -35,14 +77,56 @@ document.getElementById('default-search').addEventListener('focusout', function(
     }, 200);
 });
 
-async function fetchGames(page = currentPage) {
+async function fetchPageSelect(url) {
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log(data);
+        showGames(data);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
+
+// Fetch all games
+async function fetchAllGames(page = currentPage) {
     try {
         const response = await fetch(`${baseURL}games?key=${apiKey}&page_size=40&page=${page}`);
         const data = await response.json();
         console.log(data);
+        showGames(data);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+};
+
+// Call the function
+fetchAllGames();
+
+// Display the games that are fetched
+async function showGames(data) {
         const mainSection = document.querySelector('.main-content');
         document.querySelector('.paginate').classList.remove('hidden');
         mainSection.innerHTML = '';
+
+        document.querySelector('.prevBtn').addEventListener('click', function(e) {
+            if (data.previous != null) {
+                const main = document.querySelector('.main-content');
+                currentPage--;
+                main.innerHTML = '';
+                fetchPageSelect(data.previous);
+            }
+        });
+
+        document.querySelector('.nextBtn').addEventListener('click', function(e) {
+            if (data.next != null) {
+                const main = document.querySelector('.main-content');
+                currentPage--;
+                main.innerHTML = '';
+                fetchPageSelect(data.next);
+            }
+        });
+
 
         data.results.forEach((game) => {
             const gameElement = document.createElement('div');
@@ -69,7 +153,7 @@ async function fetchGames(page = currentPage) {
                 </div> 
             `;
 
-            gameElement.addEventListener('click', () => displaySearchResult(game));
+            gameElement.addEventListener('click', () => displayGamePage(game));
             libraryBtn = gameElement.querySelector('#library');
             bookmarkBtn = gameElement.querySelector('#bookmark');
             libraryBtn.addEventListener('click', function(e) {
@@ -97,19 +181,12 @@ async function fetchGames(page = currentPage) {
 
             mainSection.appendChild(gameElement);
         });
-    } catch (error) {
-        console.error('Error fetching data:', error);
-    }
 }
-
-
+// Format the release date
 function formatDate(dateString) {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Intl.DateTimeFormat('en-US', options).format(new Date(dateString));
 }
-
-// Call the function
-fetchGames();
 
 document.getElementById('default-search').addEventListener('input', function(e) {
     const searchTerm = e.target.value;
@@ -144,14 +221,14 @@ function displayResults(games) {
         `
         resultDiv.addEventListener('click', function(e) {
             games.filter(game => game.id === parseInt(e.target.id)).forEach(game => {
-                displaySearchResult(game);
+                displayGamePage(game);
             })
         });
         dropbox.appendChild(resultDiv);
     });
 }
 
-async function displaySearchResult(game) {
+async function displayGamePage(game) {
         const main = document.querySelector('.main-content');
         let details = await fetchGameDetails(game.id);
         let gameTrailerId = await fetchYouTubeTrailer(game.name);
@@ -269,97 +346,32 @@ async function fetchGameDetails(gameId) {
     }
 }
 
-let esrbFilter = document.getElementById('esrb');
+let platforms = document.getElementById('platforms');
 let genreFilter = document.getElementById('genre');
-let platformFilter = document.getElementById('platform');
-esrbFilter.addEventListener('change', function(e) {
-    fetchAndFilterGames('esrb-rating', e.target.value);
+let yearFilter = document.getElementById('years');
+platforms.addEventListener('change', function(e) {
+    fetchGamesByFilter(e.target.value, 'platforms');
+    e.target.value = '';
 });
 genreFilter.addEventListener('change', function(e) {
-    fetchAndFilterGames('genre', e.target.value);
+    fetchGamesByFilter(e.target.value, 'genres');
+    e.target.value = '';
 });
-// Filter games by what filter and value you pass in
-async function fetchAndFilterGames(filterType, filterValue, page = currentPage) {
-    let filterParam = '';
+yearFilter.addEventListener('change', function(e) {
+    fetchGamesByFilter(e.target.value, 'dates');
+    e.target.value = '';
+});
 
-    if (filterType === 'esrb-rating') {
-        filterParam = `&esrb_rating=${encodeURIComponent(filterValue)}`;
-    }
-    if (filterType === 'genre') {
-        filterParam = `&genres=${encodeURIComponent(filterValue)}`;
-    }
-    if (filterType === 'platform') {
-        filterParam = `&platforms=${encodeURIComponent(filterValue)}`;
-    }
-
+async function fetchGamesByFilter(value, filter) {
+    const url = `https://api.rawg.io/api/games?key=${apiKey}&${filter}=${value}`;
     try {
-        const response = await fetch(`${baseURL}games?key=${apiKey}&page_size=40&page=${page}${filterParam}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const response = await fetch(url);
         const data = await response.json();
-
         console.log(data);
-        const mainSection = document.querySelector('.main-content');
-        document.querySelector('.paginate').classList.remove('hidden');
-        mainSection.innerHTML = '';
-
-        data.results.forEach((game) => {
-            const gameElement = document.createElement('div');
-            gameElement.className = 'game-item'; 
-            gameElement.innerHTML = `
-                <div class="rounded-md overflow-hidden shadow-lg bg-gray-900 w-64 h-full cursor-pointer hover:ring-1 ring-white">
-                    <div class="h-32 bg-cover bg-center flex justify-end p-2" style="background-image: url(${game.background_image})">
-                        <div>
-                            <button class="bg-red-500 hover:bg-red-700 drop-shadow-lg text-white px-1 py-1 rounded-full flex items-center mb-2" id="library">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="white" height="18" viewBox="0 -960 960 960" width="18"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
-                            </button>
-                            <button class="bg-red-500 hover:bg-red-700 drop-shadow-lg text-white px-1 py-1 rounded-full flex items-center" id="bookmark">
-                                    <svg stroke-width="3" fill="currentColor" height="18" viewBox="0 -960 960 960" width="18">
-                                    <path d="M200-120v-640q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v640L480-240 200-120Zm80-122 200-86 200 86v-518H280v518Zm0-518h400-400Z"/>
-                                    </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="platforms"></div>
-                    <h2 class="font-bold text-xl text-white px-2 pt-2">${game.name}</h2>
-                    <p class="text-gray-300 text-[12px] px-2">Release Date: ${formatDate(game.released)}</p>
-                    <div class="p-2 flex flex-wrap gap-1 genre">    
-                    </div>
-                </div> 
-            `;
-
-            gameElement.addEventListener('click', () => displaySearchResult(game));
-            libraryBtn = gameElement.querySelector('#library');
-            bookmarkBtn = gameElement.querySelector('#bookmark');
-            libraryBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                gameLibrary.push(game);
-                console.log(gameLibrary);
-            });
-            bookmarkBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                bookaredGames.push(game);
-            
-            });
-
-            const genresDiv = gameElement.querySelector('.genre');
-            
-            game.genres.forEach((genre) => {
-                genresDiv.innerHTML += `<span class="inline-block text-[12px] font-bold text-gray-100">#${genre.name}</span>`;
-            });
-
-            /* 
-            game.platforms.forEach((platform) => {
-                platformsDiv.innerHTML += `<span class="inline-block bg-gray-200 rounded-full mb-4 text-sm font-semibold text-gray-700">#${platform.image_background}</span>`;
-            }); 
-            */
-
-            mainSection.appendChild(gameElement);
-        });
+        showGames(data);
     } catch (error) {
         console.error('Error fetching data:', error);
-        return [];
     }
 }
 
+//${baseURL}games?key=${apiKey}&page_size=40&page=${page}${filterParam}

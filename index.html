@@ -30,7 +30,7 @@
                   </a>
                 </li>
                 <li>
-                  <a href="#" class="text-gray-400 hover:text-white hover:bg-gray-800 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold">
+                  <a href="#" class="text-gray-400 hover:text-white hover:bg-gray-800 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold" id="library">
                     <svg class="h-6 w-6 shrink-0" stroke-width="1.5" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
                         <path d="M182-200q-51 0-79-35.5T82-322l42-300q9-60 53.5-99T282-760h396q60 0 104.5 39t53.5 99l42 300q7 51-21 86.5T778-200q-21 0-39-7.5T706-230l-90-90H344l-90 90q-15 15-33 22.5t-39 7.5Zm16-86 114-114h336l114 114q2 2 16 6 11 0 17.5-6.5T800-304l-44-308q-4-29-26-48.5T678-680H282q-30 0-52 19.5T204-612l-44 308q-2 11 4.5 17.5T182-280q2 0 16-6Zm482-154q17 0 28.5-11.5T720-480q0-17-11.5-28.5T680-520q-17 0-28.5 11.5T640-480q0 17 11.5 28.5T680-440Zm-80-120q17 0 28.5-11.5T640-600q0-17-11.5-28.5T600-640q-17 0-28.5 11.5T560-600q0 17 11.5 28.5T600-560ZM310-440h60v-70h70v-60h-70v-70h-60v70h-70v60h70v70Zm170-40Z"/>
                     </svg>
@@ -38,7 +38,7 @@
                   </a>
                 </li>
                 <li>
-                  <a href="#" class="text-gray-400 hover:text-white hover:bg-gray-800 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold">
+                  <a href="#" class="text-gray-400 hover:text-white hover:bg-gray-800 group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold" id="bookmarks">
                     <svg class="h-6 w-6 shrink-0" stroke-width="1.5" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
                         <path d="M200-120v-640q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v640L480-240 200-120Zm80-122 200-86 200 86v-518H280v518Zm0-518h400-400Z"/>
                     </svg>
@@ -64,24 +64,20 @@
       </div>
       
       <div class="flex items-center max-w-1/4 gap-2">
-        <select id="esrb" name="esrb" class="block h-full rounded-sm font-bold border-0 py-1.5 pl-2 pr-6 w-38 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-          <option value="">Filter by ESRB</option>
-          <option value="everyone">Everyone</option>
-          <option value="Everyone 10+">Everyone 10+</option>
-          <option value="Teen">Teen</option>
-          <option value="Mature">Mature</option>
-          <option value="Adult Only">Adult Only</option>
-          <option value="Rating Pending">Rating Pending</option>
+        <select id="platforms" name="platforms" class="block h-full rounded-sm font-bold border-0 py-1.5 pl-2 pr-6 w-38 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+          <option value="" disabled selected hidden>Filter by Platform</option>
+          <!-- <option value="everyone">Everyone</option>
+          <option value="everyone-10-plus">Everyone 10+</option>
+          <option value="teen">Teen</option>
+          <option value="mature">Mature</option>
+          <option value="adult-only">Adult Only</option>
+          <option value="rating-pending">Rating Pending</option> -->
         </select>
         <select id="genre" name="genre" class="block h-full rounded-sm font-bold border-0 py-1.5 pl-2 pr-6 w-38 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-          <option value="">Filter by Genre</option>
-          <option value="action">Action</option>
-          <option>Mexico</option>
+          <option value="" disabled selected hidden>Filter by Genre</option>
         </select>
-        <select id="platform" name="platform" placeholder="Fiter by ESRB" class="block h-full rounded-sm font-bold border-0 py-1.5 pl-2 pr-6 w-38 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-          <option value="pc">Filter by ESRB</option>
-          <option>Canada</option>
-          <option>Mexico</option>
+        <select id="years" name="years" class="block h-full rounded-sm font-bold border-0 py-1.5 pl-2 pr-6 w-38 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+          <option value="" disabled selected hidden>Filter by Year</option>
         </select>
       </div>
 
@@ -93,7 +89,7 @@
     
     <div class="flex items-center justify-between border-t border-gray-200 px-4 sm:px-0 mt-8 paginate">
       
-        <button class="-mt-px flex w-0 flex-1 pl-8 prevBtn">
+        <button class="-mt-px flex w-0 flex-1 pl-8 prevBtn" id="">
           <a href="#" class="inline-flex items-center border-t-2 border-transparent pr-1 pt-4 text-sm font-medium text-gray-300 hover:border-gray-300 hover:text-red-500">
             <svg class="mr-3 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M18 10a.75.75 0 01-.75.75H4.66l2.1 1.95a.75.75 0 11-1.02 1.1l-3.5-3.25a.75.75 0 010-1.1l3.5-3.25a.75.75 0 111.02 1.1l-2.1 1.95h12.59A.75.75 0 0118 10z" clip-rule="evenodd" />
@@ -102,7 +98,7 @@
           </a>
         </button>
        
-        <button class="-mt-px flex w-0 flex-1 justify-end pr-8 nextBtn">
+        <button class="-mt-px flex w-0 flex-1 justify-end pr-8 nextBtn" id="">
           <a href="#" class="inline-flex items-center border-t-2 border-transparent pl-1 pt-4 text-sm font-medium text-gray-300 hover:border-gray-300 hover:text-red-500">
             Next
             <svg class="ml-3 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
