@@ -1,10 +1,53 @@
+//require('dotenv').config();
 // Your RAWG API key
 const apiKey = 'f2f05023867c43febff4928653fdd52f';
 
 // Base URL for the RAWG API
 const baseURL = 'https://api.rawg.io/api/';
 
-let gameLibrary = [];
+function initializeLibrary() {
+    if (!localStorage.getItem('gameLibrary')) {
+        localStorage.setItem('gameLibrary', JSON.stringify({ results: [] }));
+    }
+}
+
+initializeLibrary();
+
+function getLibrary() {
+    const library = JSON.parse(localStorage.getItem('gameLibrary'));
+    if (!library || !library.results) {
+        return { results: [] };
+    }
+    return library;
+}
+
+function updateLibrary(library) {
+    localStorage.setItem('gameLibrary', JSON.stringify(library));
+}
+
+function addToLibrary(game) {
+    const library = getLibrary();
+
+    // Check if the game already exists in the library
+    const isGameAlreadyInLibrary = library.results.some(existingGame => existingGame.id === game.id);
+
+    if (!isGameAlreadyInLibrary) {
+        library.results.push(game);
+        updateLibrary(library);
+    } else {
+        alert('Game already exists in the library');
+    }
+}
+
+function deleteFromLibrary(gameId) {
+    let library = getLibrary();
+
+    // Filter out the game with the specified id
+    library.results = library.results.filter(game => game.id !== gameId);
+
+    updateLibrary(library);
+}
+
 let bookmarkedGames = [];
 let userRating = [];
 let currentPage = 1;
@@ -71,6 +114,13 @@ document.getElementById('homeBtn').addEventListener('click', function(e) {
     currentPage = 1;
     fetchAllGames();
 });
+document.getElementById('library').addEventListener('click', function(e) {
+    e.preventDefault();
+    const main = document.querySelector('.main-content');
+    main.innerHTML = '';
+    showSavedGames(getLibrary(), 'My Games Library');
+    console.log(getLibrary());
+});
 document.getElementById('default-search').addEventListener('focusout', function(e) {
     setTimeout(() => {
         document.getElementById('dropbox').innerHTML = '';
@@ -108,6 +158,7 @@ async function showGames(data) {
         const mainSection = document.querySelector('.main-content');
         document.querySelector('.paginate').classList.remove('hidden');
         mainSection.innerHTML = '';
+        document.querySelector('.title').innerText = 'Popular Games';
 
         document.querySelector('.prevBtn').addEventListener('click', function(e) {
             if (data.previous != null) {
@@ -158,12 +209,12 @@ async function showGames(data) {
             bookmarkBtn = gameElement.querySelector('#bookmark');
             libraryBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                gameLibrary.push(game);
-                console.log(gameLibrary);
+                addToLibrary(game);
+                alert(`${game.name} has been added to your library`);
             });
             bookmarkBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                bookaredGames.push(game);
+                bookmarkedGames.push(game);
             
             });
 
@@ -274,7 +325,7 @@ async function displayGamePage(game) {
         const libraryBtn = document.getElementById('library');
         const bookmarkBtn = document.getElementById('bookmark');
         libraryBtn.addEventListener('click', function(e) {
-            gameLibrary.push(game);
+            addToLibrary(game);
         });
         bookmarkBtn.addEventListener('click', function(e) {
             bookaredGames.push(game);
@@ -374,4 +425,54 @@ async function fetchGamesByFilter(value, filter) {
     }
 }
 
-//${baseURL}games?key=${apiKey}&page_size=40&page=${page}${filterParam}
+async function showSavedGames(data, titleText) {
+    const mainSection = document.querySelector('.main-content');
+    document.querySelector('.paginate').classList.add('hidden');
+    mainSection.innerHTML = '';
+    document.querySelector('.title').innerText = `${titleText}`;
+    if (data.results.length === 0) {
+        mainSection.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full w-full mt-[25vh]">
+            <h1 class="text-4xl font-bold text-gray-200">No Games Saved</h1>
+            <p class="text-gray-300 text-xl">You can save games by clicking the <span class="text-red-500">Add to Library</span> button on the game page.</p>
+        </div>
+        `;
+    }
+
+    data.results.forEach((game) => {
+        const gameElement = document.createElement('div');
+        gameElement.className = 'game-item'; 
+        gameElement.innerHTML = `
+            <div class="rounded-md overflow-hidden shadow-lg bg-gray-900 w-64 h-full cursor-pointer hover:ring-1 ring-white">
+                <div class="h-32 bg-cover bg-center flex justify-end p-2" style="background-image: url(${game.background_image})">
+                    <div>
+                        <button class="bg-red-500/5 hover:bg-red-700 drop-shadow-lg text-white px-1 py-1 rounded-full flex items-center mb-2" id="delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="white" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="platforms"></div>
+                <h2 class="font-bold text-xl text-white px-2 pt-2">${game.name}</h2>
+                <p class="text-gray-300 text-[12px] px-2">Release Date: ${formatDate(game.released)}</p>
+                <div class="p-2 flex flex-wrap gap-1 genre">    
+                </div>
+            </div> 
+        `;
+
+        gameElement.addEventListener('click', () => displayGamePage(game));
+        deleteBtn = gameElement.querySelector('#delete');
+        deleteBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            deleteFromLibrary(game.id);
+            console.log(getLibrary());
+            showSavedGames(getLibrary(), 'My Games Library');
+        });
+
+        const genresDiv = gameElement.querySelector('.genre');
+        game.genres.forEach((genre) => {
+            genresDiv.innerHTML += `<span class="inline-block text-[12px] font-bold text-gray-100">#${genre.name}</span>`;
+        });
+
+        mainSection.appendChild(gameElement);
+    });
+}
