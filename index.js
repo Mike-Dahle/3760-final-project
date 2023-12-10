@@ -9,8 +9,10 @@ function initializeLibrary() {
     if (!localStorage.getItem('gameLibrary')) {
         localStorage.setItem('gameLibrary', JSON.stringify({ results: [] }));
     }
+    if (!localStorage.getItem('bookmarks')) {
+        localStorage.setItem('bookmarks', JSON.stringify([]));
+    }
 }
-
 initializeLibrary();
 
 function getLibrary() {
@@ -48,7 +50,6 @@ function deleteFromLibrary(gameId) {
     updateLibrary(library);
 }
 
-let bookmarkedGames = [];
 let userRating = [];
 let currentPage = 1;
 
