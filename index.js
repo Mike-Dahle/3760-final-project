@@ -173,6 +173,12 @@ document.getElementById('multiplayer').addEventListener('click', function(e) {
     main.innerHTML = '';
     fetchGamesByFilter('multiplayer', 'tags');
 });
+document.getElementById('upcoming').addEventListener('click', function(e) {
+    e.preventDefault();
+    const main = document.querySelector('.main-content');
+    main.innerHTML = '';
+    fetchUpcomingGames();
+});
 
 document.getElementById('default-search').addEventListener('focusout', function(e) {
     setTimeout(() => {
@@ -207,11 +213,11 @@ async function fetchAllGames(page = currentPage) {
 fetchAllGames();
 
 // Display the games that are fetched
-async function showGames(data) {
+async function showGames(data, titleText = 'Popular Games') {
         const mainSection = document.querySelector('.main-content');
         document.querySelector('.paginate').classList.remove('hidden');
         mainSection.innerHTML = '';
-        document.querySelector('.title').innerText = 'Popular Games';
+        document.querySelector('.title').innerText = `${titleText}`;
 
         document.querySelector('.prevBtn').addEventListener('click', function(e) {
             if (data.previous != null) {
@@ -280,6 +286,8 @@ async function showGames(data) {
             mainSection.appendChild(gameElement);
         });
 }
+
+
 // Format the release date
 function formatDate(dateString) {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -466,7 +474,15 @@ async function fetchGamesByFilter(value, filter) {
         const response = await fetch(url);
         const data = await response.json();
         console.log(data);
-        showGames(data);
+        if (filter === 'platforms') {
+            showGames(data, 'Games by Platform');
+        } else if (filter === 'genres') {
+            showGames(data, 'Games by Genre');
+        } else if (filter === 'dates') {
+            showGames(data, 'Games by Year');
+        } else if (filter === 'tags') {
+            showGames(data, 'Multiplayer Games');
+        }
     } catch (error) {
         console.error('Error fetching data:', error);
     }
@@ -522,3 +538,62 @@ async function showSavedGames(data, titleText) {
         mainSection.appendChild(gameElement);
     });
 }
+
+
+async function fetchUpcomingGames() {
+    const today = new Date().toISOString().split('T')[0];
+    const futureDate = new Date();
+    futureDate.setFullYear(futureDate.getFullYear() + 1); // One year into the future
+    const endDate = futureDate.toISOString().split('T')[0];
+
+    const url = `https://api.rawg.io/api/games?key=${apiKey}&dates=${today},${endDate}&ordering=-added`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        showGames(data, 'Upcoming Releases');
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+} 
+
+async function fetchGamesByStore(storeId, storeName) {
+    const url = `https://api.rawg.io/api/games?key=${apiKey}&stores=${storeId}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        // Process and display the data
+        showGames(data, storeName);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
+
+document.getElementById('steamStore').addEventListener('click', function(e) {fetchGamesByStore(1, 'Available on Steam')});
+document.getElementById('playstationStore').addEventListener('click', function(e) {fetchGamesByStore(2, 'Available on Playstation')});
+document.getElementById('xboxStore').addEventListener('click', function(e) {fetchGamesByStore(3, 'Available on Xbox')});
+
+// Function to save rating to local storage
+function saveRating(gameId, rating) {
+    let ratings = JSON.parse(localStorage.getItem('ratings')) || [];
+    const existingRatingIndex = ratings.findIndex(item => item.gameId === gameId);
+
+    if (existingRatingIndex !== -1) {
+        // Update existing rating
+        ratings[existingRatingIndex].rating = rating;
+    } else {
+        // Add new rating
+        ratings.push({ gameId, rating });
+    }
+
+    localStorage.setItem('ratings', JSON.stringify(ratings));
+}
+
+// Example usage: saveRating(12345, 4); // gameId, rating
