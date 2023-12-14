@@ -340,6 +340,7 @@ async function displayGamePage(game) {
         let gameTrailerId = await fetchYouTubeTrailer(game.name);
         let gameTrailer = `https://www.youtube.com/embed/${gameTrailerId}?si=njS2mhwdffLo9fBI`
         document.querySelector('.paginate').classList.add('hidden');
+        document.querySelector('.title').innerText = '';
 
         main.innerHTML = '';
         console.log(game.name);
@@ -367,23 +368,28 @@ async function displayGamePage(game) {
         </div>
         <div class="w-3/4 mx-auto">
             <h1 class="text-[64px] font-bold text-white border-b-2 mb-4">${game.name}</h1>
-            <iframe class="w-full h-full" src="${gameTrailer}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            <iframe class="max-w-full mx-auto" src="${gameTrailer}" height="450" width="900" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             <h2 class="text-white text-xl font-bold mt-8 border-b-2 mb-2">ABOUT THIS GAME</h2>
             <div class="text-white mt-2">${details}</div>
             
             <div class="stores my-8">
              
             </div>
+            <div class="p-12"></div>
         </div>
-        `;  
-
-        const libraryBtn = document.getElementById('library');
-        const bookmarkBtn = document.getElementById('bookmark');
+        `;
+        
+        libraryBtn = main.querySelector('#library');
+        bookmarkBtn = main.querySelector('#bookmark');
         libraryBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
             addToLibrary(game);
+            alert(`${game.name} has been added to your library`);
         });
         bookmarkBtn.addEventListener('click', function(e) {
-            bookaredGames.push(game);
+            e.stopPropagation();
+            addToBookmarks(game);
+            alert(`${game.name} has been bookmarked`);
         });
 
         game.stores.forEach(location => {
@@ -536,6 +542,7 @@ async function showSavedGames(data, titleText) {
         });
 
         mainSection.appendChild(gameElement);
+        
     });
 }
 
