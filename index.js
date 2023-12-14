@@ -346,7 +346,8 @@ async function displayGamePage(game) {
         console.log(game.name);
 
         main.innerHTML = `
-        <div class="h-[32rem] w-full bg-cover bg-top brightness-50" style="background-image: url(${game.background_image})">
+        <div class="relative h-[32rem] w-full bg-cover bg-top brightness-50" style="background-image: url(${game.background_image})">
+        <div class="absolute z-10 bottom-10 left-10 text-white"><h2 class="flex">My Rating: <span class="flex" id='ratingInsert'></span> </h2></div> 
         
         </div>
         <div class="flex items-center mt-2">
@@ -360,7 +361,17 @@ async function displayGamePage(game) {
                     </svg>
                     Bookmark
             </button>
-            <h2 class="text-white mr-4">Game Released: ${formatDate(game.released)}</h2>
+
+            <h2 class="text-white mx-4">Rate Game:</h2>
+            <select name="ratings" id="ratings" class="block h-full rounded-sm font-bold border-0 py-1.5 pl-2 pr-6 w-38 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6" onchange="saveRating(${game.id}, this.value)">
+                <option value="1">1 Star</option>
+                <option value="2">2 Star</option>
+                <option value="3">3 Star</option>
+                <option value="4">4 Star</option>
+                <option value="5">5 Star</option>
+            </select>
+            
+            <h2 class="text-white mx-4">Game Released: ${formatDate(game.released)}</h2>
             <div class="flex items-center genres">
                 <p class="text-white mr-2">Genres:</p>
                 
@@ -378,7 +389,36 @@ async function displayGamePage(game) {
             <div class="p-12"></div>
         </div>
         `;
-        
+           
+        const ratings = JSON.parse(localStorage.getItem('ratings')) || [];
+        const gameRating = ratings.find(r => r.gameId === game.id);
+
+        const ratingElement = document.getElementById('ratingInsert');
+        ratingElement.innerHTML = ''; // Clear any existing content
+
+        if (gameRating) {
+            const starContainer = document.createElement('div');
+            starContainer.classList.add('flex', 'items-center');
+
+            for (let i = 0; i < gameRating.rating; i++) {
+                const star = document.createElement('svg');
+                // Set the innerHTML of the star element, not the svg itself
+                star.innerHTML = `<path d="m384-294 96-74 96 74-36-122 90-64H518l-38-124-38 124H330l90 64-36 122ZM233-80l93-304L80-560h304l96-320 96 320h304L634-384l93 304-247-188L233-80Zm247-369Z"/>`;
+                star.setAttribute('fill', 'gold');
+                star.setAttribute('stroke', 'gold');
+                star.setAttribute('height', '24');
+                star.setAttribute('viewBox', '0 -960 960 960');
+                star.setAttribute('width', '24');
+                starContainer.appendChild(star);
+            }
+
+            ratingElement.appendChild(starContainer); // Append the starContainer
+            ratingElement.innerHTML += ` Star${gameRating.rating > 1 ? 's' : ''}`;
+        } else {
+            ratingElement.textContent = 'Not rated yet';
+        }
+
+
         libraryBtn = main.querySelector('#library');
         bookmarkBtn = main.querySelector('#bookmark');
         libraryBtn.addEventListener('click', function(e) {
@@ -590,17 +630,18 @@ document.getElementById('xboxStore').addEventListener('click', function(e) {fetc
 // Function to save rating to local storage
 function saveRating(gameId, rating) {
     let ratings = JSON.parse(localStorage.getItem('ratings')) || [];
-    const existingRatingIndex = ratings.findIndex(item => item.gameId === gameId);
+    const existingRatingIndex = ratings.findIndex(r => r.gameId === gameId);
 
     if (existingRatingIndex !== -1) {
-        // Update existing rating
+        // Update the rating if it already exists
         ratings[existingRatingIndex].rating = rating;
     } else {
-        // Add new rating
+        // Add a new rating if it does not exist
         ratings.push({ gameId, rating });
     }
 
     localStorage.setItem('ratings', JSON.stringify(ratings));
+    alert(`Your ${rating} star rating was saved.`);
+    console.log(ratings);
 }
 
-// Example usage: saveRating(12345, 4); // gameId, rating
