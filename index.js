@@ -1,6 +1,4 @@
-//require('dotenv').config();
 
-// view trohphies/achievements, find co-op multiplayre games
 // Your RAWG API key
 const apiKey = 'f2f05023867c43febff4928653fdd52f';
 
@@ -363,12 +361,12 @@ async function displayGamePage(game) {
             </button>
 
             <h2 class="text-white mx-4">Rate Game:</h2>
-            <select name="ratings" id="ratings" class="block h-full rounded-sm font-bold border-0 py-1.5 pl-2 pr-6 w-38 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6" onchange="saveRating(${game.id}, this.value)">
-                <option value="1">1 Star</option>
-                <option value="2">2 Star</option>
-                <option value="3">3 Star</option>
-                <option value="4">4 Star</option>
-                <option value="5">5 Star</option>
+            <select name="ratings" id="ratings" class="block h-full rounded-sm font-bold border-0 py-1.5 pl-2 pr-6 w-38 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6" onchange="saveRating(${game.id}, this.value, '${game.name}', '${game.background_image}')">
+                <option class="rateOption" value="1">1 Star</option>
+                <option class="rateOption" value="2">2 Star</option>
+                <option class="rateOption" value="3">3 Star</option>
+                <option class="rateOption" value="4">4 Star</option>
+                <option class="rateOption" value="5">5 Star</option>
             </select>
             
             <h2 class="text-white mx-4">Game Released: ${formatDate(game.released)}</h2>
@@ -390,6 +388,13 @@ async function displayGamePage(game) {
         </div>
         `;
            
+        document.querySelectorAll('.rateOption').forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.stopPropagation();
+                displayGamePage(game);
+            });
+        });
+
         const ratings = JSON.parse(localStorage.getItem('ratings')) || [];
         const gameRating = ratings.find(r => r.gameId === game.id);
 
@@ -628,7 +633,7 @@ document.getElementById('playstationStore').addEventListener('click', function(e
 document.getElementById('xboxStore').addEventListener('click', function(e) {fetchGamesByStore(3, 'Available on Xbox')});
 
 // Function to save rating to local storage
-function saveRating(gameId, rating) {
+function saveRating(gameId, rating, name, image) {
     let ratings = JSON.parse(localStorage.getItem('ratings')) || [];
     const existingRatingIndex = ratings.findIndex(r => r.gameId === gameId);
 
@@ -637,7 +642,7 @@ function saveRating(gameId, rating) {
         ratings[existingRatingIndex].rating = rating;
     } else {
         // Add a new rating if it does not exist
-        ratings.push({ gameId, rating });
+        ratings.push({ gameId, rating, name, image });
     }
 
     localStorage.setItem('ratings', JSON.stringify(ratings));
@@ -645,3 +650,45 @@ function saveRating(gameId, rating) {
     console.log(ratings);
 }
 
+document.getElementById('ratings').addEventListener('click', function(e) {
+    e.stopPropagation();
+    showRatings();
+});
+
+function showRatings() {
+    const mainSection = document.querySelector('.main-content');
+    const ratingSection = document.createElement('div');
+    ratingSection.className = 'flex-col w-full';
+    document.querySelector('.paginate').classList.add('hidden');
+    mainSection.innerHTML = '';
+    document.querySelector('.title').innerText = `My Ratings`;
+    const ratings = JSON.parse(localStorage.getItem('ratings')) || [];
+    if (ratings.length === 0) {
+        mainSection.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full w-full mt-[25vh]">
+            <h1 class="text-4xl font-bold text-gray-200">No Ratings Saved</h1>
+            <p class="text-gray-300 text-xl">You can rate games by clicking the <span class="text-red-500">Rate Game</span> button on the game page.</p>
+        </div>
+        `;
+    }
+    ratings.forEach(rating => {
+        const gameElement = document.createElement('div');
+        gameElement.className = 'game-item'; 
+        gameElement.innerHTML = `
+        <div class="flex items-center justify-between text-white my-4">
+        <div class="flex items-center">
+            <div class="rounded-md overflow-hidden shadow-lg bg-gray-900 w-36 h-full cursor-pointer hover:ring-1 ring-white">
+                <div class="h-24 bg-cover bg-center justify-end p-2" style="background-image: url(${rating.image})">
+                </div>
+            </div>
+            <h2 class="mx-4 font-bold text-2xl">${rating.name}</h2>
+        </div>
+        <p>My Rating: ${rating.rating}/5 Stars</p>
+        </div>
+        `;
+        
+        ratingSection.appendChild(gameElement);
+        mainSection.appendChild(ratingSection);     
+    });
+
+}
